@@ -8,7 +8,7 @@ convert svg to png using CairoSVG
 
 ## Install
 
-`> pip install git+https://github.com/tetuaro/svg2png`
+`> pip install "git+https://github.com/tetutaro/svg2png.git"`
 
 ## Usage
 
