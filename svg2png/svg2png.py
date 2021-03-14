@@ -27,23 +27,39 @@ class Converter(object):
 
     def _load_size(
         self: Converter,
-        size: Optional[List[int, int]]
+        size: Optional[List[int, int]],
+        margin: Optional[int]
     ) -> None:
         assert self.image is not None
-        if size is None:
+        if margin is not None and margin <= 0:
+            raise ValueError(f'invalid margin ({margin})')
+        if size is None and margin is None:
             self.scale = 1
             self.re_size = None
             self.offset = (0, 0)
             self.new_size = None
+            return
+        if size is None:
+            self.scale = 1
+            self.re_size = None
+            self.offset = (margin, margin)
+            self.new_size = (
+                self.image.size[0] + (margin * 2),
+                self.image.size[1] + (margin * 2)
+            )
             return
         assert len(size) == 2
         if size[0] <= 0:
             raise ValueError(f'width must be > 0 ({size})')
         if size[1] <= 0:
             raise ValueError(f'height must be > 0 ({size})')
+        if margin is None:
+            margin = 0
+        if size[0] <= margin * 2 or size[1] <= margin * 2:
+            raise ValueError(f'too big margin ({margin})')
         self.scale = min(
-            size[0] / self.image.size[0],
-            size[1] / self.image.size[1]
+            (size[0] - (margin * 2)) / self.image.size[0],
+            (size[1] - (margin * 2)) / self.image.size[1]
         )
         self.re_size = (
             int(self.image.size[0] * self.scale),
@@ -90,12 +106,13 @@ class Converter(object):
         self: Converter,
         svg: str,
         size: Optional[List[int, int]],
+        margin: Optional[int],
         color: Optional[str],
         png: Optional[str]
     ) -> None:
         self.image = None
         self._load_svg(svg=svg)
-        self._load_size(size=size)
+        self._load_size(size=size, margin=margin)
         self._load_color(color=color)
         self._set_png(svg=svg, png=png)
         self.colored = None
@@ -189,6 +206,13 @@ def main() -> None:
         help=(
             '<size> or <width> <height> of png\n'
             'default: the save as svg'
+        )
+    )
+    parser.add_argument(
+        '--margin', type=int, default=None,
+        help=(
+            'margin around svg\n'
+            'default: 0'
         )
     )
     parser.add_argument(
